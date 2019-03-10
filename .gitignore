@@ -1,0 +1,16 @@
+# Generated files (maven).
+target/
+.checkstyle
+
+# Eclipse setup.
+.classpath
+.project
+.settings/
+
+# Intellij setup.
+.idea/
+*.iml
+
+# Project specific.
+Extra info/
+Classes/
