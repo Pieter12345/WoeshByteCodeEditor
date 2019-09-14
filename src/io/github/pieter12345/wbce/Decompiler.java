@@ -40,26 +40,9 @@ public class Decompiler {
 		}
 		
 		// Create the "public abstract class ThisClass extends A implements B, C, D { ...".
-		int classAccessFlags = this.classFile.getAccessFlags();
 		String className = thisIdentifier.substring(thisIdentifier.lastIndexOf('.') + 1);
 		
-		String accessFlagStr = "";
-		boolean classPublic     = (classAccessFlags & 0x0001) == 0x0001;
-		boolean classFinal      = (classAccessFlags & 0x0010) == 0x0010;
-		boolean classSuper      = (classAccessFlags & 0x0020) == 0x0020;
-		boolean classInterface  = (classAccessFlags & 0x0200) == 0x0200;
-		boolean classAbstract   = (classAccessFlags & 0x0400) == 0x0400;
-		boolean classSynthetic  = (classAccessFlags & 0x1000) == 0x1000;
-		boolean classAnnotation = (classAccessFlags & 0x2000) == 0x2000;
-		boolean classEnum       = (classAccessFlags & 0x4000) == 0x4000;
-		if(classPublic) { accessFlagStr += "public "; }
-		if(classFinal) { accessFlagStr += "final "; }
-		if(classInterface) { accessFlagStr += "interface "; }
-		if(classAbstract) { accessFlagStr += "abstract "; }
-		if(classSynthetic) { accessFlagStr += "synthetic "; }
-		if(classSuper) { accessFlagStr += "class "; } // If it's a superclass, it's a normal "class".
-		if(classAnnotation) { accessFlagStr += "annotation "; }
-		if(classEnum) { accessFlagStr += "enum "; }
+		String accessFlagStr = this.classFile.getAccessFlags().toCodeString();
 		
 		String extendsStr = "";
 		String superIdentifier = this.classFile.getSuperClassIdentifier().replace('/', '.');
