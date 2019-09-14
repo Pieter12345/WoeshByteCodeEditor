@@ -27,9 +27,9 @@ public class ByteCodeReader {
 //		String classFileName = "ByteCodeTest.class";
 //		String classFileName = "C:/Users/Pietje/Documents/Java Eclipse Workspace/HelloWorld/bin/SimpleClassForByteCodeAnalysis.class";
 		String classFileName = "C:/Users/Pietje/Documents/Java Eclipse Workspace/HelloWorld/bin/StructuresForByteCodeAnalysis.class";
-		ClassFile classFile = new ClassFile(new File(classFileName));
+		ClassFile classFile;
 		try {
-			classFile.readFile();
+			classFile = ClassFile.readFromFile(new File(classFileName));
 //			System.out.println("[DEBUG] [ByteCodeReader] readFile() executed.");
 		} catch (Exception e) {
 			System.out.println("[DEBUG] [ByteCodeReader] Exception thrown in readFile(). Here's the stacktrace:\n"
@@ -37,10 +37,12 @@ public class ByteCodeReader {
 			return;
 		}
 		
+		System.out.println("Access flags: " + classFile.getAccessFlags().toString());
+		System.exit(0);
+		
 		classFileName = "appletviewer.class";
-		classFile = new ClassFile(new File(classFileName));
 		try {
-			classFile.readFile();
+			classFile = ClassFile.readFromFile(new File(classFileName));
 //			System.out.println("[DEBUG] [ByteCodeReader] readFile() executed.");
 		} catch (Exception e) {
 			System.out.println("[DEBUG] [ByteCodeReader] Exception thrown in readFile(). Here's the stacktrace:\n"
@@ -61,7 +63,7 @@ public class ByteCodeReader {
 //					+ methods.getMethod(i).getAttributes().toString(classFile.getConstantPool()).replaceAll("\n", "\t\n"));
 //		}
 		
-		File decompileOutputFile = new File(classFile.getFile().getName().replaceAll("\\.class$", "") + "-decompile.java");
+		File decompileOutputFile = new File(classFileName.replaceAll("\\.class$", "") + "-decompile.java");
 		Decompiler decomp = new Decompiler(classFile);
 		
 		try {
@@ -488,9 +490,9 @@ public class ByteCodeReader {
 	 */
 	public static void replaceDefaultRenderContextStartupScreen() {
 		String classFileName = "DefaultRenderContext.class";
-		ClassFile classFile = new ClassFile(new File(classFileName));
+		ClassFile classFile;
 		try {
-			classFile.readFile();
+			classFile = ClassFile.readFromFile(new File(classFileName));
 		} catch (Exception e) {
 			System.out.println("[DEBUG] [ByteCodeReader] Exception thrown in readFile(). Printing stacktrace:");
 			e.printStackTrace();
@@ -528,7 +530,7 @@ public class ByteCodeReader {
 		}
 		try {
 			classFile.writeToFile(new File(
-					classFile.getFile().getName().replaceAll("\\.class$", "") + "-no_startup_screen.class"), true);
+					classFileName.replaceAll("\\.class$", "") + "-no_startup_screen.class"), true);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}

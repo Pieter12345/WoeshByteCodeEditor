@@ -23,11 +23,6 @@ public class Decompiler {
 	
 	public void decompile(File outputFile) throws DecompileException, IOException {
 		
-		// Check if the class file has been read.
-		if(!this.classFile.isRead()) {
-			throw new DecompileException("ClassFile has not been read yet (use ClassFile's readFile() method before decompiling).");
-		}
-		
 		// Initialize the decompile string.
 		String decompStr = "";
 		String indentation = ""; // For TAB's.

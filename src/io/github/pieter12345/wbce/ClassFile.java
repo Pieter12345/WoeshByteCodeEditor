@@ -11,33 +11,54 @@ import io.github.pieter12345.wbce.ClassMethods.ClassMethod;
 import io.github.pieter12345.wbce.attribute.AttributeSet;
 import io.github.pieter12345.wbce.constantpool.ConstantPoolObject;
 
+/*
+ * TODO - Revise this class:
+ * Add a way to generate the constant pool from whatever uses it.
+ *     This comes with allowing strings instead of constant pool indices to initialize some fields.
+ *     Other things that are defined through indices in the constant pool should then also
+ *       contain another representation.
+ */
 public class ClassFile {
 	
 	// Variables & Constants.
-	private int minorVersion = -1;
-	private int majorVersion = -1;
-	private ClassConstantPool constPool = null;
-	private int accessFlags = -1;
-	private int thisClassIdentifierIndex = -1;
-	private int superClassIdentifierIndex = -1;
-	private ClassInterfaces interfaces = null;
-	private ClassFields fields = null;
-	private ClassMethods methods = null;
-	private AttributeSet attributes = null;
+	private int minorVersion;
+	private int majorVersion;
+	private ClassConstantPool constPool;
+	private ClassAccessFlags accessFlags;
+	private int thisClassIdentifierIndex;
+	private int superClassIdentifierIndex;
+	private ClassInterfaces interfaces;
+	private ClassFields fields;
+	private ClassMethods methods;
+	private AttributeSet attributes;
 	
-	private final File classFile;
-	
-	private boolean fileRead = false;
-	
-	
-	public ClassFile(File classFile) {
-		this.classFile = classFile;
+	public ClassFile(int minorVersion, int majorVersion, ClassConstantPool constPool, ClassAccessFlags accessFlags,
+			int thisClassIdentifierIndex, int superClassIdentifierIndex,
+			ClassInterfaces interfaces, ClassFields fields, ClassMethods methods, AttributeSet attributes) {
+		this.minorVersion = minorVersion;
+		this.majorVersion = majorVersion;
+		this.constPool = constPool;
+		this.accessFlags = accessFlags;
+		this.thisClassIdentifierIndex = thisClassIdentifierIndex;
+		this.superClassIdentifierIndex = superClassIdentifierIndex;
+		this.interfaces = interfaces;
+		this.fields = fields;
+		this.methods = methods;
+		this.attributes = attributes;
 	}
 	
-	public void readFile() throws FileNotFoundException, IOException, Exception {
-		FancyInputStream inStream = new FancyInputStream(new FileInputStream(this.classFile));
+	/**
+	 * Reads the given class file and returns a {@link ClassFile} representing that file.
+	 * @param classFile - The class file to read.
+	 * @return A {@link ClassFile} representing the given class file.
+	 * @throws FileNotFoundException If the given file was not found.
+	 * @throws IOException If an I/O error occurs while reading the given file.
+	 * @throws Exception If the file has an illegal or unsupported format.
+	 */
+	public static ClassFile readFromFile(File classFile) throws FileNotFoundException, IOException, Exception {
+		FancyInputStream inStream = new FancyInputStream(new FileInputStream(classFile));
 		
-		// Get the magic value (CAFEBABE, 4 bytes as 8 bit integers) to verify that it's a class file.
+		// Get the magic value (CAFEBABE, 4 bytes as 8 bit integers) to verify that the file is a class file.
 		int magicValue = inStream.readFourByteInt();
 		if(magicValue != 0xCAFEBABE) {
 			inStream.close();
@@ -45,70 +66,53 @@ public class ClassFile {
 		}
 		
 		// Get the minor version (2 bytes, big edian).
-		this.minorVersion = inStream.readTwoByteInt();
-//		System.out.println("Minor version: " + this.minorVersion);
+		int minorVersion = inStream.readTwoByteInt();
 		
 		// Get the major version (2 bytes, big edian).
-		this.majorVersion = inStream.readTwoByteInt();
-//		System.out.println("Major version: " + this.majorVersion);
+		int majorVersion = inStream.readTwoByteInt();
 		
 		// Get the constant pool.
-		this.constPool = ClassConstantPool.fromInputStream(inStream);
-//		System.out.println("Constant pool size: " + this.constPool.size());
+		ClassConstantPool constPool = ClassConstantPool.fromInputStream(inStream);
 		
 		// Get the access flags (2 bytes bitmask).
-		this.accessFlags = inStream.readTwoByteInt();
-//		{
-//			boolean classPublic     = (accessFlags & 0x0001) == 0x0001;
-//			boolean classFinal      = (accessFlags & 0x0010) == 0x0010;
-//			boolean classSuper      = (accessFlags & 0x0020) == 0x0020;
-//			boolean classInterface  = (accessFlags & 0x0200) == 0x0200;
-//			boolean classAbstract   = (accessFlags & 0x0400) == 0x0400;
-//			boolean classSynthetic  = (accessFlags & 0x1000) == 0x1000;
-//			boolean classAnnotation = (accessFlags & 0x2000) == 0x2000;
-//			boolean classEnum       = (accessFlags & 0x4000) == 0x4000;
-//			System.out.println("Access flags: " + accessFlags + " -> "
-//					+ (classPublic ? "public " : "") + (classFinal ? "final " : "")
-//					+ (classSuper ? "super " : "") + (classInterface ? "interface " : "")
-//					+ (classAbstract ? "abstract " : "") + (classSynthetic ? "synthetic " : "")
-//					+ (classAnnotation ? "annotation " : "") + (classEnum ? "enum " : "")
-//				);
-//		}
+		ClassAccessFlags accessFlags = new ClassAccessFlags(inStream.readTwoByteInt());
 		
 		// Get class identifier (index in constant pool).
-		this.thisClassIdentifierIndex = inStream.readTwoByteInt();
-//		System.out.println("Class identifier index: " + this.thisClassIdentifierIndex
-//				+ "->" + this.constPool.get(this.thisClassIdentifierIndex).val(this.constPool));
+		int thisClassIdentifierIndex = inStream.readTwoByteInt();
 		
 		// Get super class identifier (index in constant pool).
-		this.superClassIdentifierIndex = inStream.readTwoByteInt();
-//		System.out.println("Super class identifier index: " + this.superClassIdentifierIndex
-//				+ "->" + this.constPool.get(this.superClassIdentifierIndex).val(this.constPool));
+		int superClassIdentifierIndex = inStream.readTwoByteInt();
 		
 		// Get the interfaces.
-		this.interfaces = ClassInterfaces.fromInputStream(inStream);
-//		System.out.println("Interface count: " + this.interfaces.size());
+		ClassInterfaces interfaces = ClassInterfaces.fromInputStream(inStream);
 
 		// Get the fields.
-		this.fields = ClassFields.fromInputStream(inStream, this.constPool);
-//		System.out.println("Field count: " + this.fields.size());
+		ClassFields fields = ClassFields.fromInputStream(inStream, constPool);
 		
 		// Get the methods.
-		this.methods = ClassMethods.fromInputStream(inStream, this.constPool);
-//		System.out.println("Method count: " + this.methods.size());
+		ClassMethods methods = ClassMethods.fromInputStream(inStream, constPool);
 		
 		// Get the class attributes.
-		this.attributes = AttributeSet.fromInputStream(inStream, this.constPool);
-//		System.out.println("Attribute count: " + this.attributes.size());
+		AttributeSet attributes = AttributeSet.fromInputStream(inStream, constPool);
 		
 		// Check if the end of the file has been reached.
 		if(inStream.read() != -1) {
-			System.out.println("[Warning] [ClassFile] The class file contains more bytes then expected.");
+			System.out.println("[Warning] [" + ClassFile.class.getSimpleName() + "]"
+					+ " The class file contains more bytes then expected.");
 		}
 		
-		this.fileRead = true;
+		// Return a ClassFile representing the read data.
+		return new ClassFile(minorVersion, majorVersion, constPool, accessFlags,
+				thisClassIdentifierIndex, superClassIdentifierIndex, interfaces, fields, methods, attributes);
 	}
 	
+	/**
+	 * Writes this {@link ClassFile} to the given file.
+	 * @param file - The file to write to.
+	 * @param overwrite - If {@code true}, the given file is overwritten if it already exists.
+	 * @throws IOException If an I/O error occurs during the writing or if the file already exists and the overwrite
+	 * parameter is {@code false} or if the parent directory of the file does not yet exist.
+	 */
 	public void writeToFile(File file, boolean overwrite) throws IOException {
 		if(file.exists() && !overwrite) {
 			throw new IOException("File already exists: " + file.getAbsolutePath());
@@ -119,19 +123,22 @@ public class ClassFile {
 		}
 		file.createNewFile();
 		FileOutputStream outStream = new FileOutputStream(file);
-		byte[] classBytes = this.toBytes();
-		outStream.write(classBytes);
+		outStream.write(this.toBytes());
 		outStream.close();
 	}
 	
-	private byte[] toBytes() {
-		@SuppressWarnings("resource")
+	/**
+	 * Gets this {@link ClassFile} as bytes in the class file format.
+	 * @return A byte array containing this {@link ClassFile} in the class file format.
+	 */
+	public byte[] toBytes() {
+		@SuppressWarnings("resource") // No resources leak from not closing the output stream.
 		FancyByteArrayOutputStream outStream = new FancyByteArrayOutputStream();
 		outStream.writeFourByteInteger(0xCAFEBABE);
 		outStream.writeTwoByteInteger(this.minorVersion);
 		outStream.writeTwoByteInteger(this.majorVersion);
 		outStream.write(this.constPool.toBytes());
-		outStream.writeTwoByteInteger(this.accessFlags);
+		outStream.writeTwoByteInteger(this.accessFlags.getValue());
 		outStream.writeTwoByteInteger(this.thisClassIdentifierIndex);
 		outStream.writeTwoByteInteger(this.superClassIdentifierIndex);
 		outStream.write(this.interfaces.toBytes());
@@ -139,14 +146,6 @@ public class ClassFile {
 		outStream.write(this.methods.toBytes());
 		outStream.write(this.attributes.toBytes());
 		return outStream.toByteArray();
-	}
-	
-	/**
-	 * isRead method.
-	 * @return True if the readFile() method successfully read the file. False otherwise.
-	 */
-	public boolean isRead() {
-		return this.fileRead;
 	}
 	
 	public int getMinorVersion() {
@@ -169,11 +168,11 @@ public class ClassFile {
 		return this.constPool;
 	}
 	
-	public int getAccessFlags() {
+	public ClassAccessFlags getAccessFlags() {
 		return this.accessFlags;
 	}
 	
-	public void setAccessFlags(int accessFlags) {
+	public void setAccessFlags(ClassAccessFlags accessFlags) {
 		this.accessFlags = accessFlags;
 	}
 	
@@ -219,16 +218,8 @@ public class ClassFile {
 		return this.attributes;
 	}
 	
-	public File getFile() {
-		return this.classFile;
-	}
-	
 	@Override
 	public String toString() {
-		if(!this.fileRead) {
-			return super.toString();
-		}
-		
 		String constPoolStr = "";
 		for(int i = 1; i <= this.constPool.size(); i++) {
 			ConstantPoolObject obj = this.constPool.get(i);
@@ -266,29 +257,11 @@ public class ClassFile {
 			}
 		}
 		
-		String accessFlagStr = "";
-		boolean classPublic     = (this.accessFlags & 0x0001) == 0x0001;
-		boolean classFinal      = (this.accessFlags & 0x0010) == 0x0010;
-		boolean classSuper      = (this.accessFlags & 0x0020) == 0x0020;
-		boolean classInterface  = (this.accessFlags & 0x0200) == 0x0200;
-		boolean classAbstract   = (this.accessFlags & 0x0400) == 0x0400;
-		boolean classSynthetic  = (this.accessFlags & 0x1000) == 0x1000;
-		boolean classAnnotation = (this.accessFlags & 0x2000) == 0x2000;
-		boolean classEnum       = (this.accessFlags & 0x4000) == 0x4000;
-		if(classPublic) { accessFlagStr += "public "; }
-		if(classFinal) { accessFlagStr += "final "; }
-		if(classSuper) { accessFlagStr += "super "; }
-		if(classInterface) { accessFlagStr += "interface "; }
-		if(classAbstract) { accessFlagStr += "abstract "; }
-		if(classSynthetic) { accessFlagStr += "synthetic "; }
-		if(classAnnotation) { accessFlagStr += "annotation "; }
-		if(classEnum) { accessFlagStr += "enum "; }
-		
 		return "ClassFile: {"
 				+ "\n\tMinor version: " + this.minorVersion
 				+ "\n\tMajor version: " + this.majorVersion
 				+ "\n\tConstant pool:" + constPoolStr
-				+ "\n\tAccess flags: " + accessFlagStr.trim()
+				+ "\n\tAccess flags: " + this.accessFlags.toCodeString()
 				+ "\n\t\"this\" identifier: " + this.constPool.get(this.thisClassIdentifierIndex).val(this.constPool)
 				+ "\n\t\"super\" identifier: " + this.constPool.get(this.superClassIdentifierIndex).val(this.constPool)
 				+ "\n\tInterfaces: " + this.interfaces.toString(this.constPool)
