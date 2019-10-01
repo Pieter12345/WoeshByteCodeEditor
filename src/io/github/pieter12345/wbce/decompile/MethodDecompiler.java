@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import io.github.pieter12345.wbce.ByteCodeInstruction;
 import io.github.pieter12345.wbce.ClassConstantPool;
+import io.github.pieter12345.wbce.MethodAccessFlag;
 import io.github.pieter12345.wbce.ByteCodeInstruction.ByteCodeInstructionPayload;
 import io.github.pieter12345.wbce.ClassMethods.ClassMethod;
 import io.github.pieter12345.wbce.attribute.CodeAttribute;
@@ -41,13 +42,13 @@ public class MethodDecompiler {
 		this.method = method;
 		this.constPool = constPool;
 		this.className = className;
-		this.isStatic = (method.getAccessFlags() & 0x0008) == 0x0008;
+		this.isStatic = method.getAccessFlags().getFlags().contains(MethodAccessFlag.STATIC);
 	}
 	
 	public String decompile() throws DecompileException {
 		
 		// Get the access flags.
-		String methodAccessFlagStr = this.method.getAccessFlagString();
+		String methodAccessFlagStr = this.method.getAccessFlags().toCodeString();
 		
 		// Get the method name.
 		if(!constPool.hasIndex(this.method.getNameIndex())) {
@@ -379,7 +380,7 @@ public class MethodDecompiler {
 		// TODO - Replace the local variable map by info from the LocalVariableTableAttribute.
 		LocalVariableGen localVarMap = new LocalVariableGen();
 		int localVarIndex = 0;
-		boolean isMethodStatic = (this.method.getAccessFlags() & 0x0008) == 0x0008;
+		boolean isMethodStatic = this.method.getAccessFlags().getFlags().contains(MethodAccessFlag.STATIC);
 		if(!isMethodStatic) {
 			if(localVarTableAttr != null) {
 				LocalVariableTableAttribute.LocalVariable localVar = localVarTableAttr.getLocalVariable(localVarIndex);

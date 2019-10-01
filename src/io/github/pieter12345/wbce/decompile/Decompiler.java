@@ -159,7 +159,7 @@ public class Decompiler {
 		for(ClassField field : fields) {
 			
 			// Get the access flags.
-			String fieldAccessFlagStr = field.getAccessFlagString();
+			String fieldAccessFlagStr = field.getAccessFlags().toCodeString();
 			
 			// Get the field name.
 			if(!constPool.hasIndex(field.getNameIndex())) {

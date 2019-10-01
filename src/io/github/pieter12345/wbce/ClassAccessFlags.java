@@ -1,5 +1,6 @@
 package io.github.pieter12345.wbce;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import io.github.pieter12345.wbce.utils.Utils;
@@ -22,6 +23,22 @@ public class ClassAccessFlags {
 	}
 	
 	/**
+	 * Gets the access flags.
+	 * @return A {@link Set} containing a clone of all access flags.
+	 */
+	public Set<ClassAccessFlag> getFlags() {
+		return new HashSet<ClassAccessFlag>(this.flags);
+	}
+	
+	/**
+	 * Sets the access flags.
+	 * @param flags - The new access flags.
+	 */
+	public void setFlags(Set<ClassAccessFlag> flags) {
+		this.flags = flags;
+	}
+	
+	/**
 	 * Gets the raw access flags value.
 	 * @return The raw access flags value.
 	 */
@@ -30,8 +47,8 @@ public class ClassAccessFlags {
 	}
 	
 	/**
-	 * Checks whether the combination of access flags is valid.
-	 * @return {@code true} if the combination of access flags, {@code false} otherwise.
+	 * Checks whether the combination of access flags can be valid.
+	 * @return {@code true} if the combination of access flags can be valid, {@code false} otherwise.
 	 */
 	public boolean isValid() {
 		int classTypeCount = 0;

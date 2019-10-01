@@ -229,7 +229,8 @@ public class ClassFile {
 		String fieldStr = "";
 		for(int i = 0; i < this.fields.size(); i++) {
 			ClassField field = this.fields.getField(i);
-			fieldStr += "\n\t\t" + i + ": " + field.getAccessFlagString() + " " + this.constPool.get(field.getNameIndex()).val(this.constPool)
+			fieldStr += "\n\t\t" + i + ": " + field.getAccessFlags().toCodeString()
+					+ " " + this.constPool.get(field.getNameIndex()).val(this.constPool)
 					+ " " + this.constPool.get(field.getDescIndex()).val(this.constPool);
 			if(field.getAttributes().size() != 0) {
 				fieldStr += " Attributes:";
@@ -247,7 +248,8 @@ public class ClassFile {
 		String methodStr = "";
 		for(int i = 0; i < this.methods.size(); i++) {
 			ClassMethod method = this.methods.getMethod(i);
-			methodStr += "\n\t\t" + i + ": " + method.getAccessFlagString() + " " + this.constPool.get(method.getNameIndex()).val(this.constPool)
+			methodStr += "\n\t\t" + i + ": " + method.getAccessFlags().toCodeString()
+					+ " " + this.constPool.get(method.getNameIndex()).val(this.constPool)
 					+ " " + this.constPool.get(method.getDescIndex()).val(this.constPool);
 			if(method.getAttributes().size() != 0) {
 				methodStr += " Attributes:";

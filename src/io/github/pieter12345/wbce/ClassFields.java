@@ -70,12 +70,12 @@ public class ClassFields {
 	}
 	
 	public static class ClassField {
-		private int accessFlags;
 		private int fieldNameIndex;
 		private int fieldDescIndex;
+		private FieldAccessFlags accessFlags;
 		private AttributeSet fieldAttributes;
 		
-		public ClassField(int accessFlags, int fieldNameIndex, int fieldDescIndex, AttributeSet fieldAttributes) {
+		public ClassField(FieldAccessFlags accessFlags, int fieldNameIndex, int fieldDescIndex, AttributeSet fieldAttributes) {
 			this.accessFlags = accessFlags;
 			this.fieldNameIndex = fieldNameIndex;
 			this.fieldDescIndex = fieldDescIndex;
@@ -83,7 +83,7 @@ public class ClassFields {
 		}
 		
 		public static ClassField fromInputStream(FancyInputStream inStream, ClassConstantPool constPool) throws IOException {
-			int accessFlags = inStream.readTwoByteInt();
+			FieldAccessFlags accessFlags = new FieldAccessFlags(inStream.readTwoByteInt());
 			int fieldNameIndex = inStream.readTwoByteInt();
 			int fieldDescIndex = inStream.readTwoByteInt();
 			AttributeSet fieldAttributes = AttributeSet.fromInputStream(inStream, constPool);
@@ -93,18 +93,18 @@ public class ClassFields {
 		public byte[] toBytes() {
 			@SuppressWarnings("resource")
 			FancyByteArrayOutputStream outStream = new FancyByteArrayOutputStream();
-			outStream.writeTwoByteInteger(this.accessFlags);
+			outStream.writeTwoByteInteger(this.accessFlags.getValue());
 			outStream.writeTwoByteInteger(this.fieldNameIndex);
 			outStream.writeTwoByteInteger(this.fieldDescIndex);
 			outStream.write(this.fieldAttributes.toBytes());
 			return outStream.toByteArray();
 		}
 		
-		public int getAccessFlags() {
+		public FieldAccessFlags getAccessFlags() {
 			return this.accessFlags;
 		}
 		
-		public void setAccessFlags(int accessFlags) {
+		public void setAccessFlags(FieldAccessFlags accessFlags) {
 			this.accessFlags = accessFlags;
 		}
 		
@@ -132,29 +132,6 @@ public class ClassFields {
 			this.fieldAttributes = attributes;
 		}
 		
-		public String getAccessFlagString() {
-			boolean fieldPublic     = (accessFlags & 0x0001) == 0x0001;
-			boolean fieldPrivate    = (accessFlags & 0x0002) == 0x0002;
-			boolean fieldProtected  = (accessFlags & 0x0004) == 0x0004;
-			boolean fieldStatic     = (accessFlags & 0x0008) == 0x0008;
-			boolean fieldFinal      = (accessFlags & 0x0010) == 0x0010;
-			boolean fieldVolatile   = (accessFlags & 0x0040) == 0x0040;
-			boolean fieldTransient  = (accessFlags & 0x0080) == 0x0080;
-			boolean fieldSynthetic  = (accessFlags & 0x1000) == 0x1000;
-			boolean fieldEnum       = (accessFlags & 0x4000) == 0x4000;
-			String accessFlagStr = "";
-			if(fieldPublic) { accessFlagStr += "public "; }
-			if(fieldPrivate) { accessFlagStr += "private "; }
-			if(fieldProtected) { accessFlagStr += "protected "; }
-			if(fieldStatic) { accessFlagStr += "static "; }
-			if(fieldFinal) { accessFlagStr += "final "; }
-			if(fieldVolatile) { accessFlagStr += "volatile "; }
-			if(fieldTransient) { accessFlagStr += "transient "; }
-			if(fieldSynthetic) { accessFlagStr += "synthetic "; }
-			if(fieldEnum) { accessFlagStr += "enum "; }
-			return accessFlagStr.trim();
-		}
-		
 		public String getName(ClassConstantPool constPool) {
 			return (constPool != null && constPool.hasIndex(this.fieldNameIndex) ?
 					constPool.get(this.fieldNameIndex).val(constPool) : null);
@@ -166,7 +143,7 @@ public class ClassFields {
 			String fieldDesc = (constPool != null && constPool.size() >= this.fieldDescIndex ?
 					constPool.get(this.fieldDescIndex).val(constPool) : "~UNKNOWN_FIELD_DESC");
 			
-			return "ClassField: {" + this.getAccessFlagString() + " " + fieldName + " " + fieldDesc
+			return "ClassField: {" + this.accessFlags.toCodeString() + " " + fieldName + " " + fieldDesc
 					+ " (" + this.fieldAttributes.size() + " attributes)}";
 		}
 	}

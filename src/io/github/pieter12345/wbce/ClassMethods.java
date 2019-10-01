@@ -81,12 +81,12 @@ public class ClassMethods {
 	}
 	
 	public static class ClassMethod {
-		private int accessFlags;
+		private MethodAccessFlags accessFlags;
 		private int methodNameIndex;
 		private int methodDescIndex;
 		private AttributeSet methodAttributes;
 		
-		public ClassMethod(int accessFlags, int methodNameIndex, int methodDescIndex, AttributeSet methodAttributes) {
+		public ClassMethod(MethodAccessFlags accessFlags, int methodNameIndex, int methodDescIndex, AttributeSet methodAttributes) {
 			this.accessFlags = accessFlags;
 			this.methodNameIndex = methodNameIndex;
 			this.methodDescIndex = methodDescIndex;
@@ -94,7 +94,7 @@ public class ClassMethods {
 		}
 		
 		public static ClassMethod fromInputStream(FancyInputStream inStream, ClassConstantPool constPool) throws IOException {
-			int accessFlags = inStream.readTwoByteInt();
+			MethodAccessFlags accessFlags = new MethodAccessFlags(inStream.readTwoByteInt());
 			int methodNameIndex = inStream.readTwoByteInt();
 			int methodDescIndex = inStream.readTwoByteInt();
 			AttributeSet methodAttributes = AttributeSet.fromInputStream(inStream, constPool);
@@ -104,18 +104,18 @@ public class ClassMethods {
 		public byte[] toBytes() {
 			@SuppressWarnings("resource")
 			FancyByteArrayOutputStream outStream = new FancyByteArrayOutputStream();
-			outStream.writeTwoByteInteger(this.accessFlags);
+			outStream.writeTwoByteInteger(this.accessFlags.getValue());
 			outStream.writeTwoByteInteger(this.methodNameIndex);
 			outStream.writeTwoByteInteger(this.methodDescIndex);
 			outStream.write(this.methodAttributes.toBytes());
 			return outStream.toByteArray();
 		}
 		
-		public int getAccessFlags() {
+		public MethodAccessFlags getAccessFlags() {
 			return this.accessFlags;
 		}
 		
-		public void setAccessFlags(int accessFlags) {
+		public void setAccessFlags(MethodAccessFlags accessFlags) {
 			this.accessFlags = accessFlags;
 		}
 		
@@ -151,42 +151,13 @@ public class ClassMethods {
 			this.methodAttributes = attributes;
 		}
 		
-		public String getAccessFlagString() {
-			boolean methodPublic       = (accessFlags & 0x0001) == 0x0001;
-			boolean methodPrivate      = (accessFlags & 0x0002) == 0x0002;
-			boolean methodProtected    = (accessFlags & 0x0004) == 0x0004;
-			boolean methodStatic       = (accessFlags & 0x0008) == 0x0008;
-			boolean methodFinal        = (accessFlags & 0x0010) == 0x0010;
-			boolean methodSynchronized = (accessFlags & 0x0020) == 0x0020;
-			boolean methodBridge       = (accessFlags & 0x0040) == 0x0040;
-			boolean methodVarargs      = (accessFlags & 0x0080) == 0x0080;
-			boolean methodNative       = (accessFlags & 0x0100) == 0x0100;
-			boolean methodAbstract     = (accessFlags & 0x0400) == 0x0400;
-			boolean methodStrict       = (accessFlags & 0x0800) == 0x0800;
-			boolean methodSynthetic    = (accessFlags & 0x1000) == 0x1000;
-			String accessFlagStr = "";
-			if(methodPublic) { accessFlagStr += "public "; }
-			if(methodPrivate) { accessFlagStr += "private "; }
-			if(methodProtected) { accessFlagStr += "protected "; }
-			if(methodStatic) { accessFlagStr += "static "; }
-			if(methodFinal) { accessFlagStr += "final "; }
-			if(methodSynchronized) { accessFlagStr += "synchronized "; }
-			if(methodBridge) { accessFlagStr += "bridge "; }
-			if(methodVarargs) { accessFlagStr += "varargs "; }
-			if(methodNative) { accessFlagStr += "native "; }
-			if(methodAbstract) { accessFlagStr += "abstract "; }
-			if(methodStrict) { accessFlagStr += "strict "; }
-			if(methodSynthetic) { accessFlagStr += "synthetic "; }
-			return accessFlagStr.trim();
-		}
-		
 		public String toString(ClassConstantPool constPool) {
 			String methodName = (constPool != null && constPool.size() >= this.methodNameIndex ?
 					constPool.get(this.methodNameIndex).val(constPool) : "~UNKNOWN_METHOD_NAME");
 			String methodDesc = (constPool != null && constPool.size() >= this.methodDescIndex ?
 					constPool.get(this.methodDescIndex).val(constPool) : "~UNKNOWN_METHOD_DESC");
 			
-			return "ClassMethod: {" + this.getAccessFlagString() + " " + methodName + " " + methodDesc
+			return "ClassMethod: {" + this.getAccessFlags().toCodeString() + " " + methodName + " " + methodDesc
 					+ " (" + this.methodAttributes.size() + " attributes)}";
 		}
 	}
